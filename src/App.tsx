@@ -32,9 +32,74 @@ function parseCSV(csv: string): Item[] {
     .filter((item): item is Item => item !== null);
 }
 
+function Lightbox({
+  images,
+  onClose,
+}: {
+  images: string[];
+  onClose: () => void;
+}) {
+  const [index, setIndex] = useState(0);
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+      if (e.key === "ArrowLeft") setIndex((i) => (i > 0 ? i - 1 : i));
+      if (e.key === "ArrowRight")
+        setIndex((i) => (i < images.length - 1 ? i + 1 : i));
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [images.length, onClose]);
+
+  return (
+    <div className="lightbox" onClick={onClose}>
+      <button className="lb-close" onClick={onClose}>&#x2715;</button>
+      <img
+        src={images[index]}
+        alt=""
+        onClick={(e) => e.stopPropagation()}
+      />
+      {images.length > 1 && (
+        <>
+          <button
+            className="lb-prev"
+            disabled={index === 0}
+            onClick={(e) => {
+              e.stopPropagation();
+              setIndex((i) => i - 1);
+            }}
+          >
+            ‹
+          </button>
+          <button
+            className="lb-next"
+            disabled={index === images.length - 1}
+            onClick={(e) => {
+              e.stopPropagation();
+              setIndex((i) => i + 1);
+            }}
+          >
+            ›
+          </button>
+          <div className="lb-dots">
+            {images.map((_, j) => (
+              <span
+                key={j}
+                className={`lb-dot${j === index ? " active" : ""}`}
+              />
+            ))}
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
 function App() {
   const [items, setItems] = useState<Item[]>([]);
   const [loading, setLoading] = useState(true);
+  const [lightbox, setLightbox] = useState<string[] | null>(null);
 
   useEffect(() => {
     fetch(SHEET_URL)
@@ -58,7 +123,11 @@ function App() {
       ) : (
         <div className="grid">
           {items.map((item, i) => (
-            <div className={`card${item.sold ? " sold" : ""}`} key={i}>
+            <div
+              className={`card${item.sold ? " sold" : ""}`}
+              key={i}
+              onClick={() => item.images.length > 0 && setLightbox(item.images)}
+            >
               {item.images.length > 0 && (
                 <div
                   className={`card-images${item.images.length > 1 ? " two" : ""}`}
@@ -77,6 +146,10 @@ function App() {
             </div>
           ))}
         </div>
+      )}
+
+      {lightbox && (
+        <Lightbox images={lightbox} onClose={() => setLightbox(null)} />
       )}
     </div>
   );
