@@ -12,6 +12,12 @@ interface Item {
 const SHEET_URL =
   "https://docs.google.com/spreadsheets/d/e/2PACX-1vSvIBnAIEajtVl_JmOGahJ0N6OAqEoTVQVnkByMN68FPLeEnX4guZLZudYcVZAnKIMugszJqRTAm-bD/pub?output=csv";
 
+function driveToDirectUrl(url: string): string {
+  const match = url.match(/\/file\/d\/([^/]+)/);
+  if (match) return `https://lh3.googleusercontent.com/d/${match[1]}`;
+  return url;
+}
+
 function parseCSV(csv: string): Item[] {
   const [, ...rows] = csv.trim().split("\n");
   return rows
@@ -19,7 +25,7 @@ function parseCSV(csv: string): Item[] {
       const cols = row.split(",").map((c) => c.trim());
       const [title, price, note, image1, image2, status] = cols;
       if (!title) return null;
-      const images = [image1, image2].filter(Boolean);
+      const images = [image1, image2].filter(Boolean).map(driveToDirectUrl);
       const sold = status?.toLowerCase() === "vendido";
       return { title, price, note, images, sold };
     })
