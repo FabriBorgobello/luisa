@@ -23,8 +23,8 @@ function parseCSV(csv: string): Item[] {
   return rows
     .map((row) => {
       const cols = row.split(",").map((c) => c.trim());
-      const [title, price, note, image1, image2, status] = cols;
-      if (!title) return null;
+      const [title, price, note, image1, image2, status, hidden] = cols;
+      if (!title || hidden?.toLowerCase() === "true") return null;
       const images = [image1, image2].filter(Boolean).map(driveToDirectUrl);
       const sold = status?.toLowerCase() === "vendido";
       return { title, price, note, images, sold };
@@ -122,7 +122,7 @@ function App() {
         </p>
       ) : (
         <div className="grid">
-          {items.map((item, i) => (
+          {[...items].sort((a, b) => Number(a.sold) - Number(b.sold)).map((item, i) => (
             <div
               className={`card${item.sold ? " sold" : ""}`}
               key={i}
