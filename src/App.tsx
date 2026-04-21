@@ -7,6 +7,7 @@ interface Item {
   note: string;
   images: string[];
   sold: boolean;
+  reserved: boolean;
 }
 
 const SHEET_URL =
@@ -27,7 +28,8 @@ function parseCSV(csv: string): Item[] {
       if (!title || hidden?.toLowerCase() === "true") return null;
       const images = [image1, image2].filter(Boolean).map(driveToDirectUrl);
       const sold = status?.toLowerCase() === "vendido";
-      return { title, price, note, images, sold };
+      const reserved = status?.toLowerCase() === "reservado";
+      return { title, price, note, images, sold, reserved };
     })
     .filter((item): item is Item => item !== null);
 }
@@ -122,9 +124,9 @@ function App() {
         </p>
       ) : (
         <div className="grid">
-          {[...items].sort((a, b) => Number(a.sold) - Number(b.sold)).map((item, i) => (
+          {[...items].sort((a, b) => Number(a.reserved) + Number(a.sold) * 2 - (Number(b.reserved) + Number(b.sold) * 2)).map((item, i) => (
             <div
-              className={`card${item.sold ? " sold" : ""}`}
+              className={`card${item.sold ? " sold" : ""}${item.reserved ? " reserved" : ""}`}
               key={i}
               onClick={() => item.images.length > 0 && setLightbox(item.images)}
             >
@@ -138,6 +140,7 @@ function App() {
                 </div>
               )}
               {item.sold && <span className="sold-badge">Vendido</span>}
+              {item.reserved && <span className="reserved-badge">Reservado</span>}
               <div className="card-body">
                 <h2>{item.title}</h2>
                 <p className="price">{item.price}</p>
